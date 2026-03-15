@@ -182,7 +182,7 @@ public struct TEKSLessonSchema: ConstraintSchema {
     /// This is "Verification is Computation" — every check is deterministic.
     public func validate(_ output: TEKSLessonPlan) -> ValidationResult {
         var violations: [Violation] = []
-        var score = 1.0
+        var penalties = 0.0
 
         // 1. TEKS code must exist in domain pack
         for code in output.teksCode {
@@ -193,7 +193,7 @@ public struct TEKSLessonSchema: ConstraintSchema {
                     correctionHint: "Use only valid TEKS codes from the provided standards list",
                     severity: .hard
                 ))
-                score -= 0.3
+                penalties += 0.3
             }
         }
 
@@ -209,7 +209,7 @@ public struct TEKSLessonSchema: ConstraintSchema {
                     correctionHint: "Objective must use a Bloom's verb at '\(requiredBloom)' level or higher",
                     severity: .hard
                 ))
-                score -= 0.25
+                penalties += 0.25
             }
         }
 
@@ -221,29 +221,29 @@ public struct TEKSLessonSchema: ConstraintSchema {
                 correctionHint: "Write a full objective starting with a Bloom's verb: 'Students will [verb]...'",
                 severity: .hard
             ))
-            score -= 0.2
+            penalties += 0.2
         }
 
-        // 4. Duration must be realistic
-        if output.durationMinutes < 15 || output.durationMinutes > 120 {
+        // 4. Duration must be realistic (30-90 min for a standard class period)
+        if output.durationMinutes < 30 || output.durationMinutes > 90 {
             violations.append(Violation(
                 field: "durationMinutes",
-                reason: "Duration \(output.durationMinutes) min is outside realistic range (15-120)",
+                reason: "Duration \(output.durationMinutes) min is outside realistic range (30-90)",
                 correctionHint: "Set duration between 30-90 minutes for a standard class period",
                 severity: .hard
             ))
-            score -= 0.15
+            penalties += 0.15
         }
 
-        // 5. Must have at least 2 phases (gradual release)
-        if output.phases.count < 2 {
+        // 5. Must have at least 3 phases (gradual release: I Do / We Do / You Do)
+        if output.phases.count < 3 {
             violations.append(Violation(
                 field: "phases",
                 reason: "Only \(output.phases.count) phase(s) — gradual release requires at least 3",
                 correctionHint: "Include at minimum: I Do (direct instruction), We Do (guided practice), You Do (independent practice)",
                 severity: .hard
             ))
-            score -= 0.2
+            penalties += 0.2
         }
 
         // 6. Phase durations should roughly sum to total duration
@@ -256,7 +256,7 @@ public struct TEKSLessonSchema: ConstraintSchema {
                 correctionHint: "Phase durations should sum to approximately \(output.durationMinutes) minutes",
                 severity: .soft
             ))
-            score -= 0.1
+            penalties += 0.1
         }
 
         // 7. Assessment must claim alignment
@@ -267,7 +267,7 @@ public struct TEKSLessonSchema: ConstraintSchema {
                 correctionHint: "Assessment must directly measure the stated learning objective. Set alignsToObjective to true and describe how.",
                 severity: .hard
             ))
-            score -= 0.2
+            penalties += 0.2
         }
 
         // 8. Differentiation fields must not be empty
@@ -285,7 +285,7 @@ public struct TEKSLessonSchema: ConstraintSchema {
                     correctionHint: "Provide a specific differentiation strategy for this population",
                     severity: .soft
                 ))
-                score -= 0.05
+                penalties += 0.05
             }
         }
 
@@ -297,10 +297,10 @@ public struct TEKSLessonSchema: ConstraintSchema {
                 correctionHint: "Provide a closure activity or exit ticket that checks for understanding",
                 severity: .soft
             ))
-            score -= 0.05
+            penalties += 0.05
         }
 
-        score = max(0, score)
+        let score = max(0, 1.0 - penalties)
         let hasHardViolations = violations.contains { $0.severity == .hard }
 
         return ValidationResult(

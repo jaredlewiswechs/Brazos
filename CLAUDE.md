@@ -55,13 +55,13 @@ brazos/
   Package.swift
   Sources/
     Brazos/                    # Core engine (domain-agnostic)
+      Brazos.swift             # Umbrella
       ConstraintSchema.swift
       Generator.swift
       ModelBackend.swift
       DomainPack.swift
       AppleFoundationBackend.swift
       ClaudeBackend.swift
-      Brazos.swift             # Umbrella
     BrazosTEKS/                # First domain pack
       TEKSDomainPack.swift
       TEKSLessonSchema.swift
@@ -70,6 +70,10 @@ brazos/
     BrazosTests/
       BrazosTests.swift
       IntegrationTests.swift
+  App/                         # iOS app (separate from package)
+    BrazosLessonPlannerApp.swift
+    ContentView.swift
+    LessonPlannerViewModel.swift
 ```
 
 ## Current Domain Packs

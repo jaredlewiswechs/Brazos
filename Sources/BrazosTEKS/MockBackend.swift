@@ -12,6 +12,17 @@ import Brazos
 
 // MARK: - Mock Backend
 
+/// Thread-safe call counter for MockBackend.
+private actor MockCallCounter {
+    private var count = 0
+
+    func next() -> Int {
+        let current = count
+        count += 1
+        return current
+    }
+}
+
 /// A mock model backend that returns pre-configured responses.
 /// Use for unit tests, UI previews, and offline development.
 public struct MockBackend: ModelBackend {
@@ -23,6 +34,7 @@ public struct MockBackend: ModelBackend {
     /// After exhausting the list, it cycles back to the first.
     private let responses: [String]
     private let latency: TimeInterval
+    private let counter = MockCallCounter()
 
     public init(responses: [String], latency: TimeInterval = 0.1) {
         self.responses = responses
@@ -35,14 +47,11 @@ public struct MockBackend: ModelBackend {
         self.latency = latency
     }
 
-    private static var callCount = 0
-
     public func generate(_ request: GenerationRequest) async throws -> GenerationResponse {
         // Simulate latency
         try await Task.sleep(for: .milliseconds(Int(latency * 1000)))
 
-        let index = MockBackend.callCount % responses.count
-        MockBackend.callCount += 1
+        let index = await counter.next() % responses.count
 
         let text = responses[index]
         let inputTokens = (request.systemPrompt.count + request.userPrompt.count) / 4
@@ -154,14 +163,21 @@ public enum MockResponses {
         "phases": [
             {
                 "name": "I Do",
-                "durationMinutes": 25,
+                "durationMinutes": 20,
                 "description": "Lecture on slope definition",
                 "teacherActions": ["Present definition"],
                 "studentActions": ["Copy notes"]
             },
             {
+                "name": "We Do",
+                "durationMinutes": 15,
+                "description": "Guided practice identifying slope",
+                "teacherActions": ["Walk through examples"],
+                "studentActions": ["Follow along with teacher"]
+            },
+            {
                 "name": "You Do",
-                "durationMinutes": 25,
+                "durationMinutes": 15,
                 "description": "Worksheet",
                 "teacherActions": ["Monitor"],
                 "studentActions": ["Complete worksheet"]
