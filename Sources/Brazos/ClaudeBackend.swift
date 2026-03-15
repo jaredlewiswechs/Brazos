@@ -26,10 +26,10 @@ public struct ClaudeBackend: ModelBackend {
     ///
     /// - Parameters:
     ///   - apiKey: Anthropic API key
-    ///   - model: Model identifier (default: claude-sonnet-4-20250514)
+    ///   - model: Model identifier (default: claude-sonnet-4-6)
     public init(
         apiKey: String,
-        model: String = "claude-sonnet-4-20250514"
+        model: String = "claude-sonnet-4-6"
     ) {
         self.apiKey = apiKey
         self.model = model
